@@ -1,0 +1,125 @@
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  creationTimestamp: null
+  name: k0s
+spec:
+  api:
+    address: 192.168.68.3
+    k0sApiPort: 9443
+    port: 6443
+    sans:
+    - 192.168.68.3
+    - 10.244.0.1
+    - fe80::be5f:f4ff:fe2e:9bc6
+    - fe80::ec62:c8ff:fe87:fffb
+    - fe80::c4ad:b4ff:fe98:99c3
+    - fe80::e0cd:53ff:fe9a:c5ea
+    - fe80::885b:49ff:fe8e:b9b2
+    tunneledNetworkingMode: false
+  controllerManager: {}
+  extensions:
+    helm:
+      repositories:
+      - name: stable
+        url: https://charts.helm.sh/stable
+      - name: openebs-community
+        url: https://openebs.github.io/charts
+      charts:
+      - name: openebs-stack
+        chartname: openebs-community/openebs
+        version: "3.3.1"
+        values: ""
+        namespace: openebs
+    storage:
+      create_default_storage_class: false
+      type: external_storage
+  images:
+    calico:
+      cni:
+        image: docker.io/calico/cni
+        version: v3.24.5
+      kubecontrollers:
+        image: docker.io/calico/kube-controllers
+        version: v3.24.5
+      node:
+        image: docker.io/calico/node
+        version: v3.24.5
+    coredns:
+      image: docker.io/coredns/coredns
+      version: 1.10.0
+    default_pull_policy: IfNotPresent
+    konnectivity:
+      image: quay.io/k0sproject/apiserver-network-proxy-agent
+      version: 0.0.33-k0s
+    kubeproxy:
+      image: registry.k8s.io/kube-proxy
+      version: v1.26.0
+    kuberouter:
+      cni:
+        image: docker.io/cloudnativelabs/kube-router
+        version: v1.5.1
+      cniInstaller:
+        image: quay.io/k0sproject/cni-node
+        version: 1.1.1-k0s.0
+    metricsserver:
+      image: registry.k8s.io/metrics-server/metrics-server
+      version: v0.6.2
+    pushgateway:
+      image: quay.io/k0sproject/pushgateway-ttl
+      version: edge@sha256:7031f6bf6c957e2fdb496161fe3bea0a5bde3de800deeba7b2155187196ecbd9
+  installConfig:
+    users:
+      etcdUser: etcd
+      kineUser: kube-apiserver
+      konnectivityUser: konnectivity-server
+      kubeAPIserverUser: kube-apiserver
+      kubeSchedulerUser: kube-scheduler
+  konnectivity:
+    adminPort: 8133
+    agentPort: 8132
+  network:
+    calico: null
+    clusterDomain: cluster.local
+    dualStack: {}
+    kubeProxy:
+      iptables:
+        masqueradeAll: true
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+      ipvs:
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+        tcpFinTimeout: 0s
+        tcpTimeout: 0s
+        udpTimeout: 0s
+      metricsBindAddress: 0.0.0.0:10249
+      mode: iptables
+    kuberouter:
+      autoMTU: true
+      hairpin: Enabled
+      ipMasq: false
+      metricsPort: 8080
+      mtu: 0
+      peerRouterASNs: ""
+      peerRouterIPs: ""
+    nodeLocalLoadBalancing:
+      envoyProxy:
+        apiServerBindPort: 7443
+        image:
+          image: docker.io/envoyproxy/envoy-distroless
+          version: v1.24.1
+        konnectivityServerBindPort: 7132
+      type: EnvoyProxy
+    podCIDR: 10.244.0.0/16
+    provider: kuberouter
+    serviceCIDR: 10.96.0.0/12
+  scheduler: {}
+  storage:
+    etcd:
+      externalCluster: null
+      peerAddress: 192.168.68.3
+    type: etcd
+  telemetry:
+    enabled: true
+status: {}

@@ -1,0 +1,42 @@
+- op: add
+  path: "/spec/template/spec/containers/1"
+  value:
+    env: []
+    image: noamasor/budi-cli-sidecar:1.2.0-bb.2.3.10
+    name: bbapps-sidecar
+    ports:
+      - containerPort: 80
+    lifecycle:
+      postStart:
+        exec:
+          command:
+            - "/bin/sh"
+            - "-c"
+            - >-
+              echo "COUCH_DB_URL=http://${COUCH_DB_USER}:${COUCH_DB_PASSWORD}@${COUCH_DB_URL#http://}" | tee .env &&
+              echo "MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}" | tee -a .env &&
+              echo "MINIO_SECRET_KEY=${MINIO_SECRET_KEY}" | tee -a .env &&
+              echo "MINIO_URL=${MINIO_URL}" | tee -a .env &&
+              echo "MAIN_PORT=${APP_SERVICE_SERVICE_PORT}" | tee -a .env
+    volumeMounts:
+      - mountPath: "/mnt/bb-backups"
+        name: bb-backups-pv-storage
+        subPath: "budibase/backup"
+
+- op: copy
+  from: "/spec/template/spec/containers/0/env"
+  path: "/spec/template/spec/containers/1/env"
+
+- op: add
+  path: "/spec/template/spec/volumes"
+  value:
+    - name: bb-backups-pv-storage
+      persistentVolumeClaim:
+        claimName: nfs-pvc
+
+# NFS server side posix permissions group id is needed otherwise:
+# error processing PVC budibase/nfs-pvc: failed to fetch PVC from API server: persistentvolumeclaims "nfs-pvc" is forbidden: User "system:node:theshire-ubuntu-192-168-68-4" cannot get resource "persistentvolumeclaims" in API group "" in the namespace "budibase": no relationship found between node 'theshire-ubuntu-192-168-68-4' and this object
+- op: add
+  path: "/spec/template/spec/securityContext"
+  value:
+    supplementalGroups: [1000]

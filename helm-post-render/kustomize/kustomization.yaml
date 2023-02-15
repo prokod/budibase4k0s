@@ -1,0 +1,20 @@
+resources:
+  - all.yaml
+  - nfs-pv.yaml
+  - nfs-pvc.yaml
+patches:
+  # sidecar container for budibase app
+  - path: patch-deployments.yaml
+    target:
+      kind: Deployment
+      name: "app-service"
+  # openebs csi for local storage
+  - path: patch-pvc.yaml
+    target:
+      kind: PersistentVolumeClaim
+      name: ".*?-data"
+  # Downgrade couchdb image
+  - path: patch-couchdb.yaml
+    target:
+      kind: StatefulSet
+      name: ".*couchdb"
